@@ -1,0 +1,13 @@
+name: Hello Github Actions
+on:
+  workflow_dispatch:
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print hello
+        run: echo "Hello from Github Actions! - Prabhav"
+      - name: Print date
+        run: date
+      - name: Print OS
+        run: uname -a
