@@ -1,0 +1,261 @@
+name: CI/CD and DevSecOps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Build and unit tests
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          {
+            set -x
+            python -m compileall -q app
+            python -m pytest -v --cov=app --cov-report=term-missing --cov-report=xml
+          } 2>&1 | tee evidence/ci.txt
+      - name: Save CI output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-cicd-ci-output
+          path: |
+            evidence/
+            coverage.xml
+          if-no-files-found: warn
+
+  devsecops:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies and scanners
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          pip install -r requirements-dev.txt
+          mkdir -p /tmp/hello-cicd-scanners
+          cd /tmp/hello-cicd-scanners
+          curl -fsSLO https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          printf '%s  %s\n' 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb \
+            gitleaks_8.30.1_linux_x64.tar.gz | sha256sum -c -
+          tar -xzf gitleaks_8.30.1_linux_x64.tar.gz gitleaks
+          sudo install gitleaks /usr/local/bin/gitleaks
+          curl -fsSLO https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz
+          printf '%s  %s\n' c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f \
+            trivy_0.75.0_Linux-64bit.tar.gz | sha256sum -c -
+          tar -xzf trivy_0.75.0_Linux-64bit.tar.gz trivy
+          sudo install trivy /usr/local/bin/trivy
+          { gitleaks version; trivy --version; python -m bandit --version; python -m pip_audit --version; } \
+            > "$GITHUB_WORKSPACE/evidence/scanner-versions.txt" 2>&1
+      - name: SAST gate
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            python -m bandit -c bandit.yaml -r app -lll -iii
+          } 2>&1 | tee evidence/sast.txt
+      - name: SCA gate
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            python -m pip_audit -r requirements.txt
+          } 2>&1 | tee evidence/sca.txt
+      - name: Secret scan gate
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            gitleaks git . --config .gitleaks.toml --redact --no-banner \
+              --report-format json --report-path evidence/gitleaks.json
+          } 2>&1 | tee evidence/secret-scan.txt
+      - name: Build Docker image and verify HTTP
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            docker build --pull -t coursework-devsecops:lab .
+            docker run --detach --name hello-cicd-smoke -p 15001:5001 coursework-devsecops:lab
+            trap 'docker rm -f hello-cicd-smoke >/dev/null 2>&1 || true' EXIT
+            curl --retry 20 --retry-delay 2 --retry-connrefused --fail --silent --show-error \
+              http://127.0.0.1:15001/health | tee /tmp/hello-cicd-health.json
+            python -c 'import json; assert json.load(open("/tmp/hello-cicd-health.json"))["status"] == "healthy"'
+          } 2>&1 | tee evidence/docker-build.txt
+      - name: Container image scan and security gate
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            trivy image --scanners vuln --severity HIGH,CRITICAL --exit-code 0 coursework-devsecops:lab
+            trivy image --scanners vuln --severity CRITICAL --exit-code 1 coursework-devsecops:lab
+          } 2>&1 | tee evidence/image-scan.txt
+      - name: Authenticate to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+      - name: Publish the passing image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          SOURCE_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${SOURCE_REPOSITORY,,}:$GITHUB_SHA"
+          {
+            set -x
+            docker tag coursework-devsecops:lab "$image"
+            docker push "$image"
+          } 2>&1 | tee evidence/registry-push.txt
+      - name: Create temporary Kubernetes cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: hello-cicd
+      - name: Deploy and verify Kubernetes
+        run: |
+          set -euo pipefail
+          {
+            set -x
+            kind load docker-image coursework-devsecops:lab --name hello-cicd
+            kubectl apply -f k8s/
+            kubectl rollout status deployment/session17-python --timeout=180s
+            kubectl get deployments,pods,services -o wide
+            test "$(kubectl get deployment session17-python -o jsonpath='{.status.readyReplicas}')" = 2
+            kubectl port-forward service/session17-python 18080:80 > /tmp/hello-cicd-port-forward.log 2>&1 &
+            forward_pid=$!
+            trap 'kill "$forward_pid" 2>/dev/null || true' EXIT
+            curl --retry 20 --retry-delay 2 --retry-connrefused --fail --silent --show-error \
+              http://127.0.0.1:18080/health | tee /tmp/hello-cicd-k8s-health.json
+            python -c 'import json; assert json.load(open("/tmp/hello-cicd-k8s-health.json"))["status"] == "healthy"'
+            curl -fsS -H 'Content-Type: application/json' \
+              -d '{"a":4,"b":5,"operation":"multiply"}' \
+              http://127.0.0.1:18080/api/calculate | tee /tmp/hello-cicd-calculation.json
+            python -c 'import json; assert json.load(open("/tmp/hello-cicd-calculation.json"))["result"] == 20'
+          } 2>&1 | tee evidence/kubernetes.txt
+      - name: Capture failure diagnostics
+        if: failure()
+        run: |
+          mkdir -p evidence
+          { kubectl get pods -o wide; kubectl get events --sort-by=.metadata.creationTimestamp; } \
+            > evidence/diagnostics.txt 2>&1 || true
+      - name: Save security and delivery output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-cicd-delivery-output
+          path: evidence/
+          if-no-files-found: warn
+
+  evidence:
+    needs: [ci, devsecops]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hello-cicd-*-output
+          path: collected
+          merge-multiple: true
+      - name: Render recorded output and assemble submission
+        env:
+          CI_RESULT: ${{ needs.ci.result }}
+          DELIVERY_RESULT: ${{ needs.devsecops.result }}
+        run: |
+          set -euo pipefail
+          pip install Pillow
+          python - <<'PY'
+          import os, re, shutil, textwrap
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+
+          root = Path('submission')
+          root.mkdir(exist_ok=True)
+          shutil.copy('README.md', root / 'README.md')
+          for session in ('session16', 'session17'):
+              shutil.copytree(session, root / session, dirs_exist_ok=True)
+          font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 16)
+          ansi = re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
+          run_url = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          passed = os.environ['CI_RESULT'] == 'success' and os.environ['DELIVERY_RESULT'] == 'success'
+          result = f"CI: **{os.environ['CI_RESULT']}**; DevSecOps: **{os.environ['DELIVERY_RESULT']}**. [Workflow run]({run_url})."
+          marker = re.compile(r'<!-- hosted-evidence:start -->.*?<!-- hosted-evidence:end -->', re.S)
+          sources = sorted(Path('collected').rglob('*.txt'))
+          for session in ('session16', 'session17'):
+              folder = root / session
+              (folder / 'evidence').mkdir(exist_ok=True)
+              (folder / 'screenshots').mkdir(exist_ok=True)
+              sections = ['## Hosted pipeline execution', '', result, '',
+                          'These PNGs render the saved command output from this run.', '']
+              for source in sources:
+                  shutil.copy(source, folder / 'evidence' / source.name)
+                  raw = ansi.sub('', source.read_text(errors='replace')).expandtabs(4)
+                  lines = [part for line in raw.splitlines() for part in (textwrap.wrap(line, 116, replace_whitespace=False) or [''])]
+                  for start in range(0, max(len(lines), 1), 48):
+                      page = start // 48 + 1
+                      shown = lines[start:start + 48]
+                      canvas = Image.new('RGB', (1280, 110 + 23 * len(shown)), '#10151d')
+                      draw = ImageDraw.Draw(canvas)
+                      draw.text((24, 18), f'{source.stem} — {page}', font=font, fill='#ffffff')
+                      for index, line in enumerate(shown):
+                          draw.text((24, 55 + index * 23), line, font=font, fill='#cbd5e1')
+                      draw.text((24, canvas.height - 30), 'Rendered from saved workflow output; full transcript linked below', font=font, fill='#94a3b8')
+                      name = f'hosted-{source.stem}-{page:02}.png'
+                      canvas.save(folder / 'screenshots' / name)
+                      sections += [f'![{source.stem}, page {page}](screenshots/{name})', '']
+                  sections += [f'[Complete {source.stem} output](evidence/{source.name})', '']
+              for report in Path('collected').rglob('*.json'):
+                  shutil.copy(report, folder / 'evidence' / report.name)
+              readme = folder / 'README.md'
+              readme.write_text(marker.sub('<!-- hosted-evidence:start -->\n' + '\n'.join(sections) + '\n<!-- hosted-evidence:end -->', readme.read_text()))
+          index = root / 'README.md'
+          statement = ('The complete pipeline passed; hosted build, security and deployment evidence is included in both session READMEs.'
+                       if passed else 'This run did not complete the full pipeline successfully. Inspect the linked workflow and resolve failed gates before submission.')
+          index.write_text(marker.sub('<!-- hosted-evidence:start -->\n' + result + '\n\n' + statement + '\n<!-- hosted-evidence:end -->', index.read_text()))
+          if Path('collected/coverage.xml').exists():
+              shutil.copy('collected/coverage.xml', root / 'session16/evidence/coverage.xml')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(result + '\n\nDownload **hello-cicd-submission-evidence** to collect the READMEs, screenshots and transcripts.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hello-cicd-submission-evidence
+          path: submission/
+          if-no-files-found: error

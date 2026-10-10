@@ -1,0 +1,18 @@
+$ python -m pytest -v tests
+============================= test session starts ==============================
+platform darwin -- Python 3.14.7, pytest-9.1.1, pluggy-1.6.0 -- /Users/yk/Desktop/coursework/DevOps assignment/DevOps-Coursework/session16-cicd/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/yk/Desktop/coursework/DevOps assignment/Hello-CICD
+configfile: pytest.ini
+collecting ... collected 8 items
+
+tests/test_app.py::test_home PASSED                                      [ 12%]
+tests/test_app.py::test_health PASSED                                    [ 25%]
+tests/test_app.py::test_greet PASSED                                     [ 37%]
+tests/test_app.py::test_add_numbers PASSED                               [ 50%]
+tests/test_app.py::test_add_numbers_missing_fields PASSED                [ 62%]
+tests/test_app.py::test_calculator_multiply PASSED                       [ 75%]
+tests/test_app.py::test_calculator_divide_by_zero PASSED                 [ 87%]
+tests/test_app.py::test_status PASSED                                    [100%]
+
+============================== 8 passed in 0.06s ===============================

@@ -1,0 +1,10 @@
+Workflow: Hello Github Actions
+Run: https://github.com/Yeashu/Hello-CICD/actions/runs/35971573813
+Job: hello (107542272296)
+Conclusion: success
+Runner label: ubuntu-latest (workflow configuration)
+Source: recorded job log excerpt; timestamp prefixes omitted
+
+##[group]Run echo "Hello from Github Actions! - Prabhav"
+echo "Hello from Github Actions! - Prabhav"
+Hello from Github Actions! - Prabhav
