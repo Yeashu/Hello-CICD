@@ -28,7 +28,9 @@ Open http://localhost:5001. The `/api/pipeline/run` dashboard endpoint simulates
 Eight application tests passed locally. Session 16 also includes evidence from the existing successful introductory Actions run. Screenshots are labelled renders of genuine saved output, with source transcripts linked beside them.
 
 <!-- hosted-evidence:start -->
-The complete DevSecOps workflow has not yet executed for this revision. Its successful pipeline and deployment screenshots must be added after the workflow runs.
+CI: **success**; DevSecOps: **success**. [Workflow run](https://github.com/Yeashu/Hello-CICD/actions/runs/38614528922).
+
+The complete pipeline passed; hosted build, security and deployment evidence is included in both session READMEs.
 <!-- hosted-evidence:end -->
 
 ## Collect pipeline screenshots

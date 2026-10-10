@@ -1,0 +1,31 @@
++ python -m compileall -q app
++ python -m pytest -v --cov=app --cov-report=term-missing --cov-report=xml
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.4.2, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.12.15/x64/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/Hello-CICD/Hello-CICD
+configfile: pytest.ini
+testpaths: tests
+plugins: platformdirs-4.13.0, cov-7.1.0
+collecting ... collected 8 items
+
+tests/test_app.py::test_home PASSED                                      [ 12%]
+tests/test_app.py::test_health PASSED                                    [ 25%]
+tests/test_app.py::test_greet PASSED                                     [ 37%]
+tests/test_app.py::test_add_numbers PASSED                               [ 50%]
+tests/test_app.py::test_add_numbers_missing_fields PASSED                [ 62%]
+tests/test_app.py::test_calculator_multiply PASSED                       [ 75%]
+tests/test_app.py::test_calculator_divide_by_zero PASSED                 [ 87%]
+tests/test_app.py::test_status PASSED                                    [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.15-final-0 _______________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+app/__init__.py       0      0   100%
+app/app.py          100     32    68%   91, 101-102, 118, 125, 129-130, 142, 176-206, 222, 227, 231
+-----------------------------------------------
+TOTAL               100     32    68%
+Coverage XML written to file coverage.xml
+============================== 8 passed in 0.21s ===============================

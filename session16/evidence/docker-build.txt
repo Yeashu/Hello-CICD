@@ -1,0 +1,113 @@
++ docker build --pull -t coursework-devsecops:lab .
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 285B 0.1s done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for docker.io/library/python:3.12-slim
+#2 ...
+
+#3 [auth] library/python:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 1.6s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 108B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 39.43kB done
+#5 DONE 0.0s
+
+#6 [1/5] FROM docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+#6 resolve docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 done
+#6 sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 10.37kB / 10.37kB done
+#6 sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe 1.75kB / 1.75kB done
+#6 sha256:df18428df8a0f9189c84e7424d214b4c50092af1f9dca5842a00c41c39bda316 5.66kB / 5.66kB done
+#6 sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 0B / 29.84MB 0.1s
+#6 sha256:75b6a36c64a1cf3520fc4b4aae4739d5caa8a6a05c27835a920a61784c9c32f8 0B / 1.29MB 0.1s
+#6 sha256:6912e23eb44595b44dc6d9882b34f305ad6f6e9667cec70b13e5dbc4f8cd97f4 0B / 12.12MB 0.1s
+#6 sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 26.21MB / 29.84MB 0.2s
+#6 sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 29.84MB / 29.84MB 0.2s done
+#6 sha256:75b6a36c64a1cf3520fc4b4aae4739d5caa8a6a05c27835a920a61784c9c32f8 1.29MB / 1.29MB 0.2s done
+#6 sha256:6912e23eb44595b44dc6d9882b34f305ad6f6e9667cec70b13e5dbc4f8cd97f4 12.12MB / 12.12MB 0.3s done
+#6 sha256:bbc5a12237474ec0b23b5051260d56d6436a24d70d9cad961adebe7a037ed813 0B / 249B 0.3s
+#6 sha256:bbc5a12237474ec0b23b5051260d56d6436a24d70d9cad961adebe7a037ed813 249B / 249B 0.3s done
+#6 extracting sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 0.1s
+#6 extracting sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 1.6s done
+#6 extracting sha256:75b6a36c64a1cf3520fc4b4aae4739d5caa8a6a05c27835a920a61784c9c32f8 0.1s
+#6 extracting sha256:75b6a36c64a1cf3520fc4b4aae4739d5caa8a6a05c27835a920a61784c9c32f8 0.2s done
+#6 extracting sha256:6912e23eb44595b44dc6d9882b34f305ad6f6e9667cec70b13e5dbc4f8cd97f4
+#6 extracting sha256:6912e23eb44595b44dc6d9882b34f305ad6f6e9667cec70b13e5dbc4f8cd97f4 0.9s done
+#6 extracting sha256:bbc5a12237474ec0b23b5051260d56d6436a24d70d9cad961adebe7a037ed813
+#6 extracting sha256:bbc5a12237474ec0b23b5051260d56d6436a24d70d9cad961adebe7a037ed813 done
+#6 DONE 3.9s
+
+#7 [2/5] WORKDIR /app
+#7 DONE 0.0s
+
+#8 [3/5] COPY requirements.txt .
+#8 DONE 0.0s
+
+#9 [4/5] RUN pip install --no-cache-dir -r requirements.txt && useradd --system --uid 10001 appuser
+#9 2.949 Collecting Flask<4,>=3.1.3 (from -r requirements.txt (line 1))
+#9 2.990   Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+#9 3.025 Collecting gunicorn>=23 (from -r requirements.txt (line 2))
+#9 3.032   Downloading gunicorn-26.2.0-py3-none-any.whl.metadata (5.5 kB)
+#9 3.053 Collecting blinker>=1.9.0 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.061   Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+#9 3.090 Collecting click>=8.1.3 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.097   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+#9 3.115 Collecting itsdangerous>=2.2.0 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.122   Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+#9 3.144 Collecting jinja2>=3.1.2 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.152   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+#9 3.256 Collecting markupsafe>=2.1.1 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.263   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+#9 3.298 Collecting werkzeug>=3.1.0 (from Flask<4,>=3.1.3->-r requirements.txt (line 1))
+#9 3.306   Downloading werkzeug-3.1.9-py3-none-any.whl.metadata (4.1 kB)
+#9 3.327 Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+#9 3.344 Downloading gunicorn-26.2.0-py3-none-any.whl (228 kB)
+#9 3.357 Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+#9 3.364 Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#9 3.372 Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+#9 3.379 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+#9 3.387 Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+#9 3.396 Downloading werkzeug-3.1.9-py3-none-any.whl (228 kB)
+#9 3.432 Installing collected packages: markupsafe, itsdangerous, gunicorn, click, blinker, werkzeug, jinja2, Flask
+#9 4.243 Successfully installed Flask-3.1.3 blinker-1.9.0 click-8.5.0 gunicorn-26.2.0 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.4 werkzeug-3.1.9
+#9 4.243 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 4.364
+#9 4.364 [notice] A new release of pip is available: 25.0.1 -> 26.2.1
+#9 4.364 [notice] To update, run: pip install --upgrade pip
+#9 4.490 useradd warning: appuser's uid 10001 is greater than SYS_UID_MAX 999
+#9 DONE 4.5s
+
+#10 [5/5] COPY app ./app
+#10 DONE 0.1s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 1.0s done
+#11 writing image sha256:5c9f7b9573837c2817b261cbfe895dd5898b76c240e2ffe7afbc0604b3ab6ca2
+#11 writing image sha256:5c9f7b9573837c2817b261cbfe895dd5898b76c240e2ffe7afbc0604b3ab6ca2 done
+#11 naming to docker.io/library/coursework-devsecops:lab done
+#11 DONE 1.0s
++ docker run --detach --name hello-cicd-smoke -p 15001:5001 coursework-devsecops:lab
+849f72c076f425889d1d166b5aa3bad61e3cd55dabffc9cf2f068fd9df5067ce
++ trap 'docker logs hello-cicd-smoke || true; docker rm -f hello-cicd-smoke >/dev/null 2>&1 || true' EXIT
++ curl --retry 20 --retry-delay 2 --retry-all-errors --retry-max-time 60 --max-time 5 --fail --silent --show-error --output /tmp/hello-cicd-health.json http://127.0.0.1:15001/health
+curl: (56) Recv failure: Connection reset by peer
++ cat /tmp/hello-cicd-health.json
+{"status":"healthy","timestamp":"2026-10-14T18:23:24.214586Z","uptime_seconds":1.71}
++ python -c 'import json; assert json.load(open("/tmp/hello-cicd-health.json"))["status"] == "healthy"'
+++ docker logs hello-cicd-smoke
+[2026-10-14 18:23:22 +0000] [1] [INFO] Starting gunicorn 26.2.0
+[2026-10-14 18:23:22 +0000] [1] [INFO] Listening at: http://0.0.0.0:5001 (1)
+[2026-10-14 18:23:22 +0000] [1] [INFO] Using worker: sync
+[2026-10-14 18:23:22 +0000] [6] [INFO] Booting worker with pid: 6
+[2026-10-14 18:23:22 +0000] [1] [ERROR] Control server error: [Errno 13] Permission denied: '/home/appuser'
+++ docker rm -f hello-cicd-smoke

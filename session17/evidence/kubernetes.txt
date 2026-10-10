@@ -1,0 +1,35 @@
++ kind load docker-image coursework-devsecops:lab --name hello-cicd
+Image: "coursework-devsecops:lab" with ID "sha256:5c9f7b9573837c2817b261cbfe895dd5898b76c240e2ffe7afbc0604b3ab6ca2" not yet present on node "hello-cicd-control-plane", loading...
++ kubectl apply -f k8s/
+deployment.apps/session17-python created
+service/session17-python created
++ kubectl rollout status deployment/session17-python --timeout=180s
+Waiting for deployment "session17-python" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "session17-python" rollout to finish: 1 of 2 updated replicas are available...
+deployment "session17-python" successfully rolled out
++ kubectl get deployments,pods,services -o wide
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                     SELECTOR
+deployment.apps/session17-python   2/2     2            2           1s    app          coursework-devsecops:lab   app=session17-python
+
+NAME                                    READY   STATUS    RESTARTS   AGE   IP           NODE                       NOMINATED NODE   READINESS GATES
+pod/session17-python-5d6ccc86d6-f62xd   1/1     Running   0          1s    10.244.0.5   hello-cicd-control-plane   <none>           <none>
+pod/session17-python-5d6ccc86d6-t2zn9   1/1     Running   0          1s    10.244.0.6   hello-cicd-control-plane   <none>           <none>
+
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/kubernetes         ClusterIP   10.96.0.1       <none>        443/TCP   23s   <none>
+service/session17-python   ClusterIP   10.96.160.186   <none>        80/TCP    1s    app=session17-python
+++ kubectl get deployment session17-python -o 'jsonpath={.status.readyReplicas}'
++ test 2 = 2
++ forward_pid=11463
++ kubectl port-forward service/session17-python 18080:80
++ trap 'kill "$forward_pid" 2>/dev/null || true' EXIT
++ curl --retry 20 --retry-delay 2 --retry-all-errors --retry-max-time 60 --max-time 5 --fail --silent --show-error --output /tmp/hello-cicd-k8s-health.json http://127.0.0.1:18080/health
+curl: (7) Failed to connect to 127.0.0.1 port 18080 after 0 ms: Couldn't connect to server
++ cat /tmp/hello-cicd-k8s-health.json
+{"status":"healthy","timestamp":"2026-10-14T18:24:59.555815Z","uptime_seconds":2.18}
++ python -c 'import json; assert json.load(open("/tmp/hello-cicd-k8s-health.json"))["status"] == "healthy"'
++ curl -fsS -H 'Content-Type: application/json' -d '{"a":4,"b":5,"operation":"multiply"}' http://127.0.0.1:18080/api/calculate
++ tee /tmp/hello-cicd-calculation.json
+{"a":4.0,"b":5.0,"expression":"4.0 \u00d7 5.0 = 20.0","operation":"multiply","result":20.0,"symbol":"\u00d7"}
++ python -c 'import json; assert json.load(open("/tmp/hello-cicd-calculation.json"))["result"] == 20'
+++ kill 11463

@@ -1,0 +1,23 @@
++ docker tag coursework-devsecops:lab ghcr.io/yeashu/hello-cicd:5e43b31a39ab5a4936d625fa02af8255930ba303
++ docker push ghcr.io/yeashu/hello-cicd:5e43b31a39ab5a4936d625fa02af8255930ba303
+The push refers to repository [ghcr.io/yeashu/hello-cicd]
+9ef526c5aa5d: Preparing
+3e10b6914cfa: Preparing
+a26f03879cc0: Preparing
+6ae01cf5f487: Preparing
+dca2a125b490: Preparing
+b361fa3b9794: Preparing
+e1fa2746ad6d: Preparing
+15f1c8eb1ab1: Preparing
+e1fa2746ad6d: Waiting
+b361fa3b9794: Waiting
+15f1c8eb1ab1: Waiting
+6ae01cf5f487: Pushed
+dca2a125b490: Pushed
+a26f03879cc0: Pushed
+9ef526c5aa5d: Pushed
+3e10b6914cfa: Pushed
+e1fa2746ad6d: Pushed
+b361fa3b9794: Pushed
+15f1c8eb1ab1: Pushed
+5e43b31a39ab5a4936d625fa02af8255930ba303: digest: sha256:442b75ccb2b36c1d8c5d7293adf3c0beb5a9a85f50657baacdf2fcc83535342a size: 1992
