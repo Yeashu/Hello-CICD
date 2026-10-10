@@ -107,9 +107,10 @@ jobs:
             set -x
             docker build --pull -t coursework-devsecops:lab .
             docker run --detach --name hello-cicd-smoke -p 15001:5001 coursework-devsecops:lab
-            trap 'docker rm -f hello-cicd-smoke >/dev/null 2>&1 || true' EXIT
-            curl --retry 20 --retry-delay 2 --retry-connrefused --fail --silent --show-error \
-              http://127.0.0.1:15001/health | tee /tmp/hello-cicd-health.json
+            trap 'docker logs hello-cicd-smoke || true; docker rm -f hello-cicd-smoke >/dev/null 2>&1 || true' EXIT
+            curl --retry 20 --retry-delay 2 --retry-all-errors --retry-max-time 60 --max-time 5 --fail --silent --show-error \
+              --output /tmp/hello-cicd-health.json http://127.0.0.1:15001/health
+            cat /tmp/hello-cicd-health.json
             python -c 'import json; assert json.load(open("/tmp/hello-cicd-health.json"))["status"] == "healthy"'
           } 2>&1 | tee evidence/docker-build.txt
       - name: Container image scan and security gate
@@ -157,8 +158,9 @@ jobs:
             kubectl port-forward service/session17-python 18080:80 > /tmp/hello-cicd-port-forward.log 2>&1 &
             forward_pid=$!
             trap 'kill "$forward_pid" 2>/dev/null || true' EXIT
-            curl --retry 20 --retry-delay 2 --retry-connrefused --fail --silent --show-error \
-              http://127.0.0.1:18080/health | tee /tmp/hello-cicd-k8s-health.json
+            curl --retry 20 --retry-delay 2 --retry-all-errors --retry-max-time 60 --max-time 5 --fail --silent --show-error \
+              --output /tmp/hello-cicd-k8s-health.json http://127.0.0.1:18080/health
+            cat /tmp/hello-cicd-k8s-health.json
             python -c 'import json; assert json.load(open("/tmp/hello-cicd-k8s-health.json"))["status"] == "healthy"'
             curl -fsS -H 'Content-Type: application/json' \
               -d '{"a":4,"b":5,"operation":"multiply"}' \
